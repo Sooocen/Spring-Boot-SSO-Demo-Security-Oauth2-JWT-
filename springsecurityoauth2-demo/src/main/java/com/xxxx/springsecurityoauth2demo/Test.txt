@@ -1,0 +1,204 @@
+## Spring Security + Oauth2
+    pom.xml Redis相关依赖
+    resources.application.yml  Redis相关配置
+    config.RedisConfig  Redis相关配置相关配置
+    config.AuthorizationServerConfig  Redis相关配置
+
+##【授权码模式】
+一、获取授权码
+    http://localhost:8080/oauth/authorize?response_type=code&client_id=client&redirect_uri=http://www.baidu.com&scope=all
+
+    返回 https://www.baidu.com/?code=tQKo8b
+二丶PostMan
+    地址 localhost:8080/oauth/token
+    选择 Authorization 选择Basic Auth 填写授权服务器 账号密码(AuthorizationServerConfig) (username:client password:112233)
+    选择 Body 填写 授权服务器配置   grant_type   authorization_code
+                                client_id    client
+                                redirect_uri http://www.baidu.com
+                                scope        all
+            填写 上一步返回的授权码 code         tQKo8b
+
+    返回 {
+           "access_token": "17effa1b-c461-4e60-aff4-05ff3cbd5c8c",
+           "token_type": "bearer",
+           "expires_in": 43199,
+           "scope": "all"
+       }
+三丶访问接口
+    PostMan 地址 localhost:8080/user/getCurrentUser
+            选择 Authorization Bearer Token 填写 17effa1b-c461-4e60-aff4-05ff3cbd5c8c
+
+    返回 {
+           "username": "admin",
+           "password": "$2a$10$83FDpAnngwHW6lHTLGbKpuX0C30VBZVVyFisq.E78Z02PQ1OPySsq",
+           "authorities": [
+               {
+                   "authority": "admin"
+               }
+           ],
+           "enabled": true,
+           "accountNonExpired": true,
+           "accountNonLocked": true,
+           "credentialsNonExpired": true
+       }
+
+
+
+
+
+【密码模式】
+一、获取令牌
+    地址 localhost:8080/oauth/token
+    选择 Authorization 选择Basic Auth 填写授权服务器 账号密码(AuthorizationServerConfig) (username:client password:112233)
+    选择 Body 填写服务器配置   grant_type   password
+                            scope        all
+                            username     admin(用户账号)
+                            password     123456(用户密码)
+    返回 {
+           "access_token": "d3b79a37-02a7-40d2-a95d-4d1029d71699",
+           "token_type": "bearer",
+           "expires_in": 43199,
+           "scope": "all"
+       }
+二丶访问接口
+    PostMan 地址 localhost:8080/user/getCurrentUser
+                选择 Authorization Bearer Token 填写 d3b79a37-02a7-40d2-a95d-4d1029d71699
+
+        返回 {
+               "username": "admin",
+               "password": "$2a$10$8CITzkIe7Lf/W0ZrNGxwc.Od1fHLJefN5sO/n2116vJqjCsmPdKwS",
+               "authorities": [
+                   {
+                       "authority": "admin"
+                   }
+               ],
+               "enabled": true,
+               "accountNonLocked": true,
+               "accountNonExpired": true,
+               "credentialsNonExpired": true
+           }
+
+
+
+
+
+## Spring Security + Oauth2 + JWT
+
+【密码模式】
+一、获取令牌 (AuthorizationServerConfig配置设置了密钥)  (test_key)
+    地址 localhost:8080/oauth/token
+    选择 Authorization 选择Basic Auth 填写授权服务器 账号密码(AuthorizationServerConfig) (username:client password:112233)
+    选择 Body 填写服务器配置   grant_type   password
+                            scope        all
+                            username     admin(用户账号)
+                            password     123456(用户密码)
+    返回 {
+           "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2MjcwNTIwNTQsInVzZXJfbmFtZSI6ImFkbWluIiwiYXV0aG9yaXRpZXMiOlsiYWRtaW4iXSwianRpIjoiZGJkNjBlMjUtYjkyOC00MjM0LTlkMmUtYjViMDg1MWZmYmI0IiwiY2xpZW50X2lkIjoiY2xpZW50Iiwic2NvcGUiOlsiYWxsIl19.Z-KqjDD6Oj9ZdjGs4cCR6tLelCWhRrGYdBTyT5rMrGo",
+           "token_type": "bearer",
+           "expires_in": 43199,
+           "scope": "all",
+           "jti": "dbd60e25-b928-4234-9d2e-b5b0851ffbb4"
+       }
+二丶访问接口
+    PostMan 地址 localhost:8080/user/getCurrentUser
+                选择 Authorization Bearer Token 填写 eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2MjcwNTIwNTQsInVzZXJfbmFtZSI6ImFkbWluIiwiYXV0aG9yaXRpZXMiOlsiYWRtaW4iXSwianRpIjoiZGJkNjBlMjUtYjkyOC00MjM0LTlkMmUtYjViMDg1MWZmYmI0IiwiY2xpZW50X2lkIjoiY2xpZW50Iiwic2NvcGUiOlsiYWxsIl19.Z-KqjDD6Oj9ZdjGs4cCR6tLelCWhRrGYdBTyT5rMrGo
+
+        返回 admin
+
+
+
+
+
+## 添加自定义JWT内容
+    添加config.JwtTokenEnhancer实现(implements)TokenEnhancer  (位置可不同) 通过Map 配置自定义内容 key:Value
+    在JwtTokenStoreConfig注入JwtTokenEnhancer实现 Bean
+    config.AuthorizationServerConfig 密码模式TokenEnhancerChain配置添加TokenEnhancer 最后配置.tokenEnhancer(tokenEnhancerChain);
+
+一、获取令牌 (AuthorizationServerConfig配置设置了密钥)  (test_key)
+    地址 localhost:8080/oauth/token
+    选择 Authorization 选择Basic Auth 填写授权服务器 账号密码(AuthorizationServerConfig) (username:client password:112233)
+    选择 Body 填写服务器配置   grant_type   password
+                            scope        all
+                            username     admin(用户账号)
+                            password     123456(用户密码)
+    返回 {
+           "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX25hbWUiOiJhZG1pbiIsInNjb3BlIjpbImFsbCJdLCJleHAiOjE2MjcwNTQ4NTcsImF1dGhvcml0aWVzIjpbImFkbWluIl0sImp0aSI6IjdiZDBhYjZlLTkyNjctNGUwMS1iNzE1LWIxMGJhMzcwYmNmMyIsImNsaWVudF9pZCI6ImNsaWVudCIsImVuaGFuY2UiOiJlbmhhbmNlciBvbmZvIn0.3KNCjefTlefpMJVRrNGaQ3Vh0KitapAtRMglVlTiIK0",
+           "token_type": "bearer",
+           "expires_in": 43199,
+           "scope": "all",
+           "jti": "dbd60e25-b928-4234-9d2e-b5b0851ffbb4"
+       }
+二丶访问接口
+    PostMan 地址 localhost:8080/user/getCurrentUser
+                选择 Headers 填写 Authorization [bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX25hbWUiOiJhZG1pbiIsInNjb3BlIjpbImFsbCJdLCJleHAiOjE2MjcwNTQ4NTcsImF1dGhvcml0aWVzIjpbImFkbWluIl0sImp0aSI6IjdiZDBhYjZlLTkyNjctNGUwMS1iNzE1LWIxMGJhMzcwYmNmMyIsImNsaWVudF9pZCI6ImNsaWVudCIsImVuaGFuY2UiOiJlbmhhbmNlciBvbmZvIn0.3KNCjefTlefpMJVRrNGaQ3Vh0KitapAtRMglVlTiIK0]
+
+        返回 {
+               "user_name": "admin",
+               "scope": [
+                   "all"
+               ],
+               "exp": 1627054857,
+               "authorities": [
+                   "admin"
+               ],
+               "jti": "7bd0ab6e-9267-4e01-b715-b10ba370bcf3",
+               "client_id": "client",
+               "enhance": "enhancer onfo"
+           }
+
+
+
+
+
+##添加刷新令牌
+    在config.AuthorizationServerConfig 密码模式添加刷新令牌
+一、获取令牌 (AuthorizationServerConfig配置设置了密钥)  (test_key)
+    地址 localhost:8080/oauth/token
+    选择 Authorization 选择Basic Auth 填写授权服务器 账号密码(AuthorizationServerConfig) (username:client password:112233)
+    选择 Body 填写服务器配置   grant_type   password
+                            scope        all
+                            username     admin(用户账号)
+                            password     123456(用户密码)
+    返回 {
+           "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX25hbWUiOiJhZG1pbiIsInNjb3BlIjpbImFsbCJdLCJleHAiOjE2MjcwMTI5NjIsImF1dGhvcml0aWVzIjpbImFkbWluIl0sImp0aSI6IjU5NDkwMTYzLTE4N2EtNGNmYy1hYWU1LTEwNjA1ZmYwNWNkMSIsImNsaWVudF9pZCI6ImNsaWVudCIsImVuaGFuY2UiOiJlbmhhbmNlciBvbmZvIn0.aCUs1EWX6LHmkWC7GtkkIavmk5a3MzDVn2mkBoL2E-c",
+           "token_type": "bearer",
+           "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX25hbWUiOiJhZG1pbiIsInNjb3BlIjpbImFsbCJdLCJhdGkiOiI1OTQ5MDE2My0xODdhLTRjZmMtYWFlNS0xMDYwNWZmMDVjZDEiLCJleHAiOjE2MjcwMTMyMDIsImF1dGhvcml0aWVzIjpbImFkbWluIl0sImp0aSI6ImExMmQ2ZTFhLTA1YjItNGZlNS1hZTZlLWEyNjA0N2NlNGYzMSIsImNsaWVudF9pZCI6ImNsaWVudCIsImVuaGFuY2UiOiJlbmhhbmNlciBvbmZvIn0.HcqofysRwTf1unOTsUgqu6RA3Xrqp6hFSwrYDXbnhAc",
+           "expires_in": 59,
+           "scope": "all",
+           "enhance": "enhancer onfo",
+           "jti": "59490163-187a-4cfc-aae5-10605ff05cd1"
+       }
+二、正常访问
+    PostMan 地址 localhost:8080/user/getCurrentUser
+                选择 Headers 填写 Authorization [bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX25hbWUiOiJhZG1pbiIsInNjb3BlIjpbImFsbCJdLCJleHAiOjE2MjcwNTQ4NTcsImF1dGhvcml0aWVzIjpbImFkbWluIl0sImp0aSI6IjdiZDBhYjZlLTkyNjctNGUwMS1iNzE1LWIxMGJhMzcwYmNmMyIsImNsaWVudF9pZCI6ImNsaWVudCIsImVuaGFuY2UiOiJlbmhhbmNlciBvbmZvIn0.3KNCjefTlefpMJVRrNGaQ3Vh0KitapAtRMglVlTiIK0]
+
+        返回 {
+               "user_name": "admin",
+               "scope": [
+                   "all"
+               ],
+               "exp": 1627012962,
+               "authorities": [
+                   "admin"
+               ],
+               "jti": "59490163-187a-4cfc-aae5-10605ff05cd1",
+               "client_id": "client",
+               "enhance": "enhancer onfo"
+           }
+三、令牌失效后访问
+    地址 localhost:8080/oauth/token
+        选择 Authorization 选择Basic Auth 填写授权服务器 账号密码(AuthorizationServerConfig) (username:client password:112233)
+        选择 Body 填写服务器配置   grant_type       refresh_token
+                                srefresh_token   eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX25hbWUiOiJhZG1pbiIsInNjb3BlIjpbImFsbCJdLCJhdGkiOiI1OTQ5MDE2My0xODdhLTRjZmMtYWFlNS0xMDYwNWZmMDVjZDEiLCJleHAiOjE2MjcwMTMyMDIsImF1dGhvcml0aWVzIjpbImFkbWluIl0sImp0aSI6ImExMmQ2ZTFhLTA1YjItNGZlNS1hZTZlLWEyNjA0N2NlNGYzMSIsImNsaWVudF9pZCI6ImNsaWVudCIsImVuaGFuY2UiOiJlbmhhbmNlciBvbmZvIn0.HcqofysRwTf1unOTsUgqu6RA3Xrqp6hFSwrYDXbnhAc
+    返回{
+          "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX25hbWUiOiJhZG1pbiIsInNjb3BlIjpbImFsbCJdLCJleHAiOjE2MjcwMTMxNDcsImF1dGhvcml0aWVzIjpbImFkbWluIl0sImp0aSI6Ijc1NmRkYzMxLWE1YmMtNGI2OC04Y2M1LTFhZDc1ODVlM2Y2NiIsImNsaWVudF9pZCI6ImNsaWVudCIsImVuaGFuY2UiOiJlbmhhbmNlciBvbmZvIn0.nbVEr9RzDklU0xZw67D-NGaBfu99HxwFE9rPIrjT0LA",
+          "token_type": "bearer",
+          "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX25hbWUiOiJhZG1pbiIsInNjb3BlIjpbImFsbCJdLCJhdGkiOiI3NTZkZGMzMS1hNWJjLTRiNjgtOGNjNS0xYWQ3NTg1ZTNmNjYiLCJleHAiOjE2MjcwMTMyMDIsImF1dGhvcml0aWVzIjpbImFkbWluIl0sImp0aSI6ImExMmQ2ZTFhLTA1YjItNGZlNS1hZTZlLWEyNjA0N2NlNGYzMSIsImNsaWVudF9pZCI6ImNsaWVudCIsImVuaGFuY2UiOiJlbmhhbmNlciBvbmZvIn0.XNTEin_Jfjt_0JrChlA-WViQMvOki5l7nFFAIl_eaOM",
+          "expires_in": 59,
+          "scope": "all",
+          "enhance": "enhancer onfo",
+          "jti": "756ddc31-a5bc-4b68-8cc5-1ad7585e3f66"
+      }
+四丶重新访问
+    使用三中新获得的令牌重新访问即可
+

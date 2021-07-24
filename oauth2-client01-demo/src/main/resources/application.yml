@@ -1,0 +1,36 @@
+#授权服务器地址
+oauth2-server-url: http://localhost:8080
+server:
+  #授权服务器地址
+  port: 8081
+  servlet:
+    session:
+      cookie:
+        name: OAUTH2-CLIENT-SESSIONID01
+#与授权服务器对应的配置
+security:
+  oauth2:
+    client:
+      client-id: client
+      client-secret: 112233
+      #获取授权码
+      user-authorization-uri: ${oauth2-server-url}/oauth/authorize
+      #获取Token
+      access-token-uri: ${oauth2-server-url}/oauth/token
+    resource:
+      jwt:
+        #获取Jwt
+        key-uri: ${oauth2-server-url}/oauth/token_key
+
+#整合JWT时 删除Redis及相关配置
+#spring:
+#  redis:
+#    host: localhost
+#    password:
+#    timeout: PT30M
+# 禁止Actuator监控Redis连接
+#management:
+#  health:
+#    redis:
+#      enabled: false
+

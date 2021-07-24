@@ -1,0 +1,12 @@
+#整合JWT时 删除Redis及相关配置
+#spring:
+#  redis:
+#    host: localhost
+#    password:
+#    timeout: PT30M
+# 禁止Actuator监控Redis连接
+management:
+  health:
+    redis:
+      enabled: false
+
